@@ -1,0 +1,66 @@
+name: ao486
+version: 0.1.0
+spec: '0.1'
+kind: ip
+lang: verilog
+identity:
+  slug: ao486-tapeout-foreign
+  display_name: ao486
+  summary: Aleksander Osman's ao486, an x86 core with every feature of a 486 SX, taken as a black box.
+  category: processor
+  subcategories:
+  - x86
+  ip_family: ao486
+  integration_profile: []
+  maturity: planned
+contract:
+  version: 1
+  ctrl:
+    shape: none
+    aw: 32
+    dw: 32
+emit:
+- kind: foreign
+  lang: verilog
+  top: ao486
+  # defines.v 的宏有的文件 include，有的（decode_prefix.v）直接用
+  unit: single
+  rtl:
+  # autogen/ 下是被 include 进来的片段，不单独编
+  - glob: "third_party/ao486/rtl/ao486/**/*.v"
+    exclude: ["third_party/ao486/rtl/ao486/autogen/*"]
+  - { glob: "third_party/ao486/rtl/common/*.v" }
+  includes: [third_party/ao486/rtl/ao486]
+  clock:
+    port: clk
+  reset:
+    port: rst_n
+    active: low
+    sync: false
+  ports:
+  - endpoint: mem
+    kind: transaction
+    role: manager
+    profile: avalon-mm
+    prefix: avm_
+  - endpoint: io
+    kind: transaction
+    role: manager
+    profile: avalon-mm
+    prefix: avalon_io_
+  - endpoint: irq
+    kind: event
+    role: sink
+    map:
+      doIrq: interrupt_do
+      vector: interrupt_vector
+      done: interrupt_done
+  limits:
+  - 一个 486 SX 核，顶层没有参数，本版不可配
+  - 上游的测试是与 Bochs 逐条对拍，要它的仿真环境，本仓没跑
+diagnostics:
+  # 上游有六十多处先用后声明
+  allow: [slang:UsedBeforeDeclared]
+targets:
+  foreign:
+    driver: foreign
